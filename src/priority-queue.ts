@@ -21,7 +21,7 @@ export class PriorityQueue<T> {
   }
 
   dequeue() {
-    this.items.shift();
+    return this.items.shift();
   }
 
   peek() {

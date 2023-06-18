@@ -1,19 +1,10 @@
 import { readFileSync } from 'fs';
-
-interface HuffmanLeafNode {
-  type: 'leaf';
-  char: string;
-  frequency: number;
-}
-
-interface HuffmanInternalNode {
-  type: 'internal';
-  frequency: number;
-  left: HuffmanNode;
-  right: HuffmanNode;
-}
-
-type HuffmanNode = HuffmanLeafNode | HuffmanInternalNode;
+import { PriorityQueue } from './priority-queue.js';
+import {
+  HuffmanInternalNode,
+  HuffmanLeafNode,
+  HuffmanNode,
+} from './huffman.js';
 
 const readFile = (fileName: string) => {
   try {
@@ -35,30 +26,48 @@ const prepareAFrequencyMap = (text: string) => {
 };
 
 const constructAHuffmanTree = (frequencyList: [string, number][]) => {
-  const sortedFrequencyList: HuffmanNode[] = frequencyList
-    .sort((a, b) => a[1] - b[1])
-    .map(([char, frequency]) => ({ type: 'leaf', char, frequency }));
+  const nodes = new PriorityQueue<HuffmanNode>();
 
-  while (sortedFrequencyList.length > 1) {
-    const leastTwo = sortedFrequencyList.splice(0, 2);
-    const combinedNode: HuffmanInternalNode = {
-      type: 'internal',
-      frequency: leastTwo[0].frequency + leastTwo[1].frequency,
-      left: leastTwo[0],
-      right: leastTwo[1],
-    };
-    const index = sortedFrequencyList.findIndex(
-      (node) => node.frequency > combinedNode.frequency,
-    );
-    if (index === -1) {
-      sortedFrequencyList.push(combinedNode);
-    } else {
-      sortedFrequencyList[index] = combinedNode;
-    }
+  for (const [char, frequency] of frequencyList) {
+    nodes.enqueue({
+      priority: frequency,
+      value: new HuffmanLeafNode(char, frequency),
+    });
   }
-  return sortedFrequencyList[0].right;
+
+  while (nodes.items.length > 1) {
+    const leftNode = nodes.dequeue();
+    const rightNode = nodes.dequeue();
+    nodes.enqueue({
+      priority: leftNode.priority + rightNode.priority,
+      value: new HuffmanInternalNode(leftNode.value, rightNode.value),
+    });
+  }
+
+  return nodes;
 };
 
-console.log(
-  constructAHuffmanTree(prepareAFrequencyMap(readFile('./hello-world.txt'))),
+function generateHuffmanCodes(node: HuffmanNode, code: string) {
+  if (node.isLeaf()) {
+    huffmanCodes[(node as HuffmanLeafNode).char] = code;
+  } else {
+    generateHuffmanCodes((node as HuffmanInternalNode).left, code + '0');
+    generateHuffmanCodes((node as HuffmanInternalNode).right, code + '1');
+  }
+}
+
+function decodeHuffmanCodes(node: HuffmanNode, code: string) {
+  if (node.isLeaf()) {
+    huffmanCodes[(node as HuffmanLeafNode).char] = code;
+  } else {
+    generateHuffmanCodes((node as HuffmanInternalNode).left, code + '0');
+    generateHuffmanCodes((node as HuffmanInternalNode).right, code + '1');
+  }
+}
+
+const huffmanCodes: { [key: string]: string } = {};
+const huffmanTree = constructAHuffmanTree(
+  prepareAFrequencyMap(readFile('./hello-world.txt')),
 );
+generateHuffmanCodes(huffmanTree.peek().value, '');
+console.log(huffmanCodes);
