@@ -139,12 +139,11 @@ const frequencyMap = prepareAFrequencyMap(inputFile);
 const huffmanTree = constructAHuffmanTree(frequencyMap);
 const huffmanTreeWithPrefix = generateHuffmanCodesWithPrefixes(huffmanTree);
 const compressedText = compressText(huffmanTreeWithPrefix, inputFile);
-console.log({ huffmanTreeWithPrefix, compressText });
-writeCompressedTextToFile(
-  huffmanTreeWithPrefix,
-  compressedText,
-  'compressed-hello.txt',
-);
+// writeCompressedTextToFile(
+//   huffmanTreeWithPrefix,
+//   compressedText,
+//   'compressed-hello.txt',
+// );
 
-// const compressedHuffman = readCompressedText('./compressed-hello.txt');
-// console.log(decodeHuffman(compressedHuffman.prefixes, compressedHuffman.text));
+const compressedHuffman = readCompressedText('./compressed-hello.txt');
+console.log(decodeHuffman(compressedHuffman.prefixes, compressedHuffman.text));
