@@ -27,8 +27,10 @@ const constructAHuffmanTree = (frequencyList: [string, number][]) => {
   }
 
   while (nodes.items.length > 1) {
-    const leftNode = nodes.dequeue();
-    const rightNode = nodes.dequeue();
+    const node1 = nodes.dequeue();
+    const node2 = nodes.dequeue();
+    const leftNode = node1.priority < node2.priority ? node1 : node2;
+    const rightNode = node1.priority < node2.priority ? node2 : node1;
     nodes.enqueue({
       priority: leftNode.priority + rightNode.priority,
       value: new HuffmanInternalNode(leftNode.value, rightNode.value),
@@ -63,19 +65,17 @@ const compressText = (prefixes: { [key: string]: string }, text: string) => {
       arrayOfCodes.push(code);
     }
   }
-  const bitPacks = arrayOfCodes
-    .join('')
-    .match(/.{1,8}/g)
-    .map((x) => x.padEnd(8, '0'))
-    .join('');
+  let bitPacks = arrayOfCodes.join('');
+  // Calculate the padding needed for the last byte
+  const padding = 8 - (bitPacks.length % 8);
+  bitPacks = bitPacks.padEnd(bitPacks.length + padding, '0');
 
-  const byteArray = [];
+  const byteArray = [padding]; // Store padding as the first byte
   for (let i = 0; i < bitPacks.length; i += 8) {
     const byteString = bitPacks.substr(i, 8);
     const byte = parseInt(byteString, 2);
     byteArray.push(byte);
   }
-
   return Uint8Array.from(byteArray);
 };
 
@@ -98,22 +98,34 @@ const writeCompressedTextToFile = (
 
 const readCompressedText = (
   fileName: string,
-): {
-  prefixes: { [key: string]: string };
-  text: string[];
-} => {
-  const sd = readFileSync(fileName);
-  let byteArray = Uint8Array.from(sd);
+): { prefixes: { [key: string]: string }; text: string } => {
+  const data = readFileSync(fileName);
+  console.log({ data });
+  //   // Finding the index of '#' character
+  const hashIndex = data.indexOf('#'.charCodeAt(0));
 
-  let str = String.fromCharCode.apply(null, byteArray);
+  // Decoding the JSON part
+  const prefixesPart = data.slice(0, hashIndex);
+  const prefixes = JSON.parse(prefixesPart.toString());
 
+  // Getting the compressed binary part
+  const textPart = data.slice(hashIndex + 1);
+
+  // Get the padding from the first byte
+  const padding = textPart[0];
+  const bytesWithoutPadding = textPart.slice(1);
+
+  // Convert each byte to bits
+  let text = Array.from(bytesWithoutPadding, (byte) =>
+    byte.toString(2).padStart(8, '0'),
+  );
   return {
-    prefixes: JSON.parse(str.split('#')[0]),
-    text: convertBytesToBits(new Uint8Array(Buffer.from(str.split('#')[1]))),
+    prefixes,
+    text: text.join('').slice(0, -padding),
   };
 };
 
-const decodeHuffman = (prefixes: { [key: string]: string }, text: string[]) => {
+const decodeHuffman = (prefixes: { [key: string]: string }, text: string) => {
   const reversePrefixes: { [key: string]: string } = {};
 
   for (const key in prefixes) {
@@ -121,10 +133,9 @@ const decodeHuffman = (prefixes: { [key: string]: string }, text: string[]) => {
   }
 
   let decodedText = '';
-  const mergedBits = text.join('');
   let currentCode = '';
 
-  for (const bit of mergedBits) {
+  for (const bit of text) {
     currentCode += bit;
     if (currentCode in reversePrefixes) {
       decodedText += reversePrefixes[currentCode];
@@ -134,11 +145,11 @@ const decodeHuffman = (prefixes: { [key: string]: string }, text: string[]) => {
   return decodedText;
 };
 
-const inputFile = readFileWithFileName('./hello-world.txt');
-const frequencyMap = prepareAFrequencyMap(inputFile);
-const huffmanTree = constructAHuffmanTree(frequencyMap);
-const huffmanTreeWithPrefix = generateHuffmanCodesWithPrefixes(huffmanTree);
-const compressedText = compressText(huffmanTreeWithPrefix, inputFile);
+// const inputFile = readFileWithFileName('./hello-world.txt');
+// const frequencyMap = prepareAFrequencyMap(inputFile);
+// const huffmanTree = constructAHuffmanTree(frequencyMap);
+// const huffmanTreeWithPrefix = generateHuffmanCodesWithPrefixes(huffmanTree);
+// const compressedText = compressText(huffmanTreeWithPrefix, inputFile);
 // writeCompressedTextToFile(
 //   huffmanTreeWithPrefix,
 //   compressedText,
