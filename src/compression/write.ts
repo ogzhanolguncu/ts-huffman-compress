@@ -1,16 +1,12 @@
-import { readFileSync, writeFile } from 'fs';
+import { writeFile } from 'fs';
 import {
-  HuffmanInternalNode,
-  HuffmanLeafNode,
   HuffmanNode,
-} from './huffman.js';
-import { PriorityQueue } from './priority-queue.js';
-import { readFileWithFileName } from './utils.js';
+  HuffmanLeafNode,
+  HuffmanInternalNode,
+} from '../huffman.js';
+import { PriorityQueue } from '../priority-queue.js';
+import { readFileWithFileName } from '../utils.js';
 
-//TODO: Figure out why prefix serialization fails
-//TODO: Try to run the same algorithm with prefix that we read from compressed text
-//TODO: Implement CLI to read and write from easily
-//MAYBE: Split up functions as read and write for better maintainability
 const prepareAFrequencyMap = (text: string) => {
   const frequencyMap = new Map<string, number>();
 
@@ -105,65 +101,13 @@ const writeCompressedTextToFile = (
   });
 };
 
-const readCompressedText = (
-  fileName: string,
-): { prefixes: { [key: string]: string }; text: string } => {
-  const data = readFileSync(fileName);
-
-  const prefixLengthBytes = data.slice(0, 4);
-  const prefixLength = prefixLengthBytes.readUInt32BE();
-
-  const prefixesPart = data.slice(4, 4 + prefixLength);
-  const prefixesString = prefixesPart.toString('utf8');
-  const prefixes = JSON.parse(prefixesString);
-
-  const textPart = data.slice(4 + prefixLength);
-  const padding = textPart[0];
-  const bytesWithoutPadding = textPart.slice(1);
-
-  let text = Array.from(bytesWithoutPadding, (byte) =>
-    byte.toString(2).padStart(8, '0'),
-  );
-  return {
-    prefixes,
-    text: text.join('').slice(0, -padding),
-  };
-};
-
-const decodeHuffman = (prefixes: { [key: string]: string }, text: string) => {
-  const reversePrefixes: { [key: string]: string } = {};
-
-  for (const key in prefixes) {
-    reversePrefixes[prefixes[key]] = key;
-  }
-
-  let decodedText = '';
-  let currentCode = '';
-
-  for (const bit of text) {
-    currentCode += bit;
-    if (currentCode in reversePrefixes) {
-      decodedText += reversePrefixes[currentCode];
-      currentCode = '';
-    }
-  }
-  writeFile('decompressed-text.txt', decodedText, (err) => {
-    if (err) throw err;
-    console.log('The file has been saved!');
-  });
-  return decodedText;
-};
-
-// const inputFile = readFileWithFileName('./les-miserables.txt');
-// const frequencyMap = prepareAFrequencyMap(inputFile);
-// const huffmanTree = constructAHuffmanTree(frequencyMap);
-// const huffmanTreeWithPrefix = generateHuffmanCodesWithPrefixes(huffmanTree);
-// const compressedText = compressText(huffmanTreeWithPrefix, inputFile);
-// writeCompressedTextToFile(
-//   huffmanTreeWithPrefix,
-//   compressedText,
-//   'compressed-hello.txt',
-// );
-
-const compressedHuffman = readCompressedText('./compressed-hello.txt');
-decodeHuffman(compressedHuffman.prefixes, compressedHuffman.text);
+const inputFile = readFileWithFileName('./les-miserables.txt');
+const frequencyMap = prepareAFrequencyMap(inputFile);
+const huffmanTree = constructAHuffmanTree(frequencyMap);
+const huffmanTreeWithPrefix = generateHuffmanCodesWithPrefixes(huffmanTree);
+const compressedText = compressText(huffmanTreeWithPrefix, inputFile);
+writeCompressedTextToFile(
+  huffmanTreeWithPrefix,
+  compressedText,
+  'compressed-hello.txt',
+);
