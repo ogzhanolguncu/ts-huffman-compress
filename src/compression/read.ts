@@ -53,7 +53,7 @@ const decodeHuffman = (
   return decodedText;
 };
 
-export const handleDecompression = (inputPath: string, outputPath: string) => {
+export const decompress = (inputPath: string, outputPath: string) => {
   try {
     const compressedHuffman = readCompressedText(inputPath);
     decodeHuffman(

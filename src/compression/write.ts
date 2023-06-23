@@ -3,8 +3,8 @@ import {
   HuffmanNode,
   HuffmanLeafNode,
   HuffmanInternalNode,
-} from '../huffman.js';
-import { PriorityQueue } from '../priority-queue.js';
+} from '../huffman-tree/index.js';
+import { PriorityQueue } from '../priority-queue/index.js';
 import { readFileWithFileName } from '../utils.js';
 
 const prepareAFrequencyMap = (text: string) => {
@@ -86,7 +86,7 @@ const writeCompressedTextToFile = (
 ) => {
   const prefixesString = JSON.stringify(prefixes);
   const prefixLength = Buffer.byteLength(prefixesString, 'utf8');
-  const prefixLengthBytes = Buffer.alloc(4); // Using 4 bytes to store the length (assuming max length is within Uint32 range)
+  const prefixLengthBytes = Buffer.alloc(4); // Using 4 bytes to store the length
   prefixLengthBytes.writeUInt32BE(prefixLength);
 
   const mergedBuffer = Buffer.concat([
@@ -101,7 +101,7 @@ const writeCompressedTextToFile = (
   });
 };
 
-export const handleCompression = (inputPath: string, outputPath: string) => {
+export const compress = (inputPath: string, outputPath: string) => {
   try {
     const inputFile = readFileWithFileName(inputPath);
     const frequencyMap = prepareAFrequencyMap(inputFile);

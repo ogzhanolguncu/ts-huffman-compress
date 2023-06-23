@@ -1,8 +1,8 @@
 import chalkAnimation from 'chalk-animation';
 import inquirer from 'inquirer';
 import { sleep } from './utils.js';
-import { handleCompression } from './compression/write.js';
-import { handleDecompression } from './compression/read.js';
+import { compress } from './compression/write.js';
+import { decompress } from './compression/read.js';
 
 type CLIInputs = {
   inputFilePath: string;
@@ -19,6 +19,12 @@ async function welcome() {
 async function handleInputs(): Promise<CLIInputs> {
   const inputs = await inquirer.prompt([
     {
+      type: 'list',
+      name: 'variant',
+      message: 'Pick one of the commands:',
+      choices: ['compress', 'decompress'],
+    },
+    {
       type: 'input',
       name: 'inputFilePath',
       message: 'Enter the input file path:',
@@ -26,12 +32,6 @@ async function handleInputs(): Promise<CLIInputs> {
         if (!Boolean(input)) return 'Input path cannot be empty';
         return true;
       },
-    },
-    {
-      type: 'list',
-      name: 'variant',
-      message: 'Pick one of the commands:',
-      choices: ['compress', 'decompress'],
     },
     {
       type: 'input',
@@ -49,8 +49,8 @@ async function handleInputs(): Promise<CLIInputs> {
 
 function handleTinyfier(inputs: CLIInputs) {
   if (inputs.variant === 'compress')
-    return handleCompression(inputs.inputFilePath, inputs.outputFilePath);
-  return handleDecompression(inputs.inputFilePath, inputs.outputFilePath);
+    return compress(inputs.inputFilePath, inputs.outputFilePath);
+  return decompress(inputs.inputFilePath, inputs.outputFilePath);
 }
 
 await welcome();
