@@ -101,13 +101,23 @@ const writeCompressedTextToFile = (
   });
 };
 
-const inputFile = readFileWithFileName('./les-miserables.txt');
-const frequencyMap = prepareAFrequencyMap(inputFile);
-const huffmanTree = constructAHuffmanTree(frequencyMap);
-const huffmanTreeWithPrefix = generateHuffmanCodesWithPrefixes(huffmanTree);
-const compressedText = compressText(huffmanTreeWithPrefix, inputFile);
-writeCompressedTextToFile(
-  huffmanTreeWithPrefix,
-  compressedText,
-  'compressed-hello.txt',
-);
+export const handleCompression = (inputPath: string, outputPath: string) => {
+  try {
+    const inputFile = readFileWithFileName(inputPath);
+    const frequencyMap = prepareAFrequencyMap(inputFile);
+    const huffmanTree = constructAHuffmanTree(frequencyMap);
+    const huffmanTreeWithPrefix = generateHuffmanCodesWithPrefixes(huffmanTree);
+    const compressedText = compressText(huffmanTreeWithPrefix, inputFile);
+    writeCompressedTextToFile(
+      huffmanTreeWithPrefix,
+      compressedText,
+      outputPath,
+    );
+    return 'Successfully compressed!';
+  } catch (error) {
+    console.log(
+      'Something went wrong while compressing files. Probably file is missing or couldnt decode the prefixes',
+    );
+    throw new Error(error);
+  }
+};

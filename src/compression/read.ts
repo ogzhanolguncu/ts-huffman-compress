@@ -25,7 +25,11 @@ const readCompressedText = (
   };
 };
 
-const decodeHuffman = (prefixes: { [key: string]: string }, text: string) => {
+const decodeHuffman = (
+  prefixes: { [key: string]: string },
+  text: string,
+  outputPath: string,
+) => {
   const reversePrefixes: { [key: string]: string } = {};
 
   for (const key in prefixes) {
@@ -42,12 +46,24 @@ const decodeHuffman = (prefixes: { [key: string]: string }, text: string) => {
       currentCode = '';
     }
   }
-  writeFile('decompressed-text.txt', decodedText, (err) => {
+  writeFile(outputPath, decodedText, (err) => {
     if (err) throw err;
     console.log('The file has been saved!');
   });
   return decodedText;
 };
 
-const compressedHuffman = readCompressedText('./compressed-hello.txt');
-decodeHuffman(compressedHuffman.prefixes, compressedHuffman.text);
+export const handleDecompression = (inputPath: string, outputPath: string) => {
+  try {
+    const compressedHuffman = readCompressedText(inputPath);
+    decodeHuffman(
+      compressedHuffman.prefixes,
+      compressedHuffman.text,
+      outputPath,
+    );
+    return 'Successfully decompressed!';
+  } catch (error) {
+    console.log('Something went wrong while decompressing files');
+    throw new Error(error);
+  }
+};
